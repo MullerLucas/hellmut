@@ -14,11 +14,14 @@ pub type HellErrorRef = sync::Arc<dyn error::Error>;
 
 /// we need to wrap the acutal error struct into another struct, so we can implement From<E> for any Error (including HellError)
 /// using a !not Trait implementation would be nicer
-#[derive(fmt::Debug)]
+#[derive(Clone, fmt::Debug)]
 pub struct HellError {
     #[allow(dead_code)]
     inner: InnerHellError,
 }
+
+// TODO: check
+unsafe impl Send for HellError  {}
 
 impl HellError {
     pub fn new(kind: HellErrorKind, content: HellErrorContent) -> Self {
@@ -53,7 +56,7 @@ impl<E> From<E> for HellError where E: error::Error + 'static {
 // inner-hell-error
 // ----------------------------------------------------------------------------
 
-#[derive(fmt::Debug)]
+#[derive(Clone, fmt::Debug)]
 pub enum HellErrorKind  {
     GenericError,
     WindowError,
@@ -61,7 +64,7 @@ pub enum HellErrorKind  {
     ResourceError,
 }
 
-#[derive(fmt::Debug)]
+#[derive(Clone, fmt::Debug)]
 pub enum HellErrorContent {
     Empty,
     Wrapper(HellErrorRef),
@@ -69,7 +72,7 @@ pub enum HellErrorContent {
     Code(u32)
 }
 
-#[derive(fmt::Debug)]
+#[derive(Clone, fmt::Debug)]
 pub struct InnerHellError {
     kind: HellErrorKind,
     content: HellErrorContent,

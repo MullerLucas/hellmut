@@ -41,9 +41,9 @@ impl WSServer {
 
 
 impl WSServer {
-    pub async fn start_listening(&self) {
+    pub async fn start_listening(&self) -> HellResult<()> {
         println!("listenting on: {}", &self.addr);
-        let listener = TcpListener::bind(&self.addr).await.unwrap();
+        let listener = TcpListener::bind(&self.addr).await?;
 
         while let Ok((stream, addr)) = listener.accept().await {
             tokio::spawn(
@@ -54,18 +54,16 @@ impl WSServer {
                 )
             );
         }
+
+        Ok(())
     }
 }
 
 impl WSServer {
-    async fn handle_connection(peer_map: PeerMap, raw_stream: TcpStream, addr: SocketAddr) {
-
+    async fn handle_connection(peer_map: PeerMap, raw_stream: TcpStream, addr: SocketAddr) -> HellResult<()> {
         println!("incoming TCP connection from: {}", addr);
 
-        let ws_stream: WebSocketStream<_> = tokio_tungstenite::accept_async(raw_stream)
-            .await
-            .unwrap();
-
+        let ws_stream: WebSocketStream<_> = tokio_tungstenite::accept_async(raw_stream).await?;
         let (tx, rx) = unbounded();
         peer_map.lock().unwrap().insert(addr, tx);
 
@@ -93,5 +91,7 @@ impl WSServer {
 
         println!("{} disconnected", &addr);
         peer_map.lock().unwrap().remove(&addr);
+
+        Ok(())
     }
 }

@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use hell_error::{HellResult, HellError, HellErrorKind, HellErrorContent};
+use hell_error::HellResult;
 use surrealdb::Response;
 use surrealdb::sql::Value;
 

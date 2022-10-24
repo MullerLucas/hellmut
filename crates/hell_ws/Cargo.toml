@@ -9,7 +9,7 @@ edition.workspace = true
 # todo remove default feature
 default    = ["hell_tungs"]
 hell_actix = ["actix", "actix-web", "actix-web-actors"]
-hell_tungs = ["futures", "futures-channel", "tokio", "tokio-tungstenite"]
+hell_tungs = ["url", "futures", "futures-channel", "tokio", "tokio-tungstenite"]
 
 
 
@@ -20,8 +20,10 @@ actix            = { workspace = true, optional = true }
 actix-web        = { workspace = true, optional = true }
 actix-web-actors = { workspace = true, optional = true }
 
+url = { workspace = true, optional = true }
+
 futures           = { workspace = true, optional = true }
-# futures-util      = { workspace = true, optional = true }
+futures-util      = { workspace = true, optional = true }
 futures-channel   = { workspace = true, optional = true }
 
 tokio             = { workspace = true, optional = true }
