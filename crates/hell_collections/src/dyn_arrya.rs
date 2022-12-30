@@ -9,6 +9,13 @@ pub struct DynArray<T, const SIZE: usize> {
 impl<T, const SIZE: usize> DynArray<T, SIZE>
     where [T; SIZE]: Default,
 {
+    pub fn from_default() -> Self {
+        let data: [T; SIZE] = Default::default();
+        Self::new(data, 0)
+    }
+}
+
+impl<T, const SIZE: usize> DynArray<T, SIZE> {
     pub fn new(data: [T; SIZE], len: usize) -> Self {
         if len > SIZE {
             panic!("invalid length: '{}'", len);
@@ -19,11 +26,6 @@ impl<T, const SIZE: usize> DynArray<T, SIZE>
             len,
         }
     }
-    pub fn from_default() -> Self {
-        let data: [T; SIZE] = Default::default();
-        Self::new(data, 0)
-    }
-
     pub fn from_fn(cb: impl FnMut(usize) -> T) -> Self {
         let data = array::from_fn(cb);
         Self::new(data, 0)
