@@ -51,6 +51,18 @@ impl<E> From<E> for HellError where E: error::Error + 'static {
 }
 
 
+// ----------------------------------------------------------------------------
+// inner-hell-error-helper
+// ----------------------------------------------------------------------------
+pub struct HellErrorHelper;
+
+impl HellErrorHelper {
+    pub fn render_msg_err(msg: impl Into<String>) -> HellError {
+        HellError::new(HellErrorKind::RenderError, HellErrorContent::Message(msg.into()))
+    }
+}
+
+
 
 // ----------------------------------------------------------------------------
 // inner-hell-error
