@@ -180,26 +180,31 @@ where
 // ----------------------------------------------------------------------------
 
 pub trait OptToHellErr<V> {
-    fn to_hell_err(self, kind: HellErrorKind) -> Result<V, HellError>;
     fn to_generic_hell_err(self) -> Result<V, HellError>;
     fn to_window_hell_err(self) -> Result<V, HellError>;
     fn to_render_hell_err(self) -> Result<V, HellError>;
+    fn ok_or_herr(self, kind: HellErrorKind) -> HellResult<V>;
+    fn ok_or_render_herr(self, msg: impl Into<String>) -> HellResult<V>;
 }
 
 impl<V> OptToHellErr<V> for Option<V> {
-    fn to_hell_err(self, kind: HellErrorKind) -> Result<V, HellError> {
+    fn ok_or_herr(self, kind: HellErrorKind) -> Result<V, HellError> {
         self.ok_or_else(|| HellError::from_msg(kind, "option is none".to_string()))
     }
 
     fn to_generic_hell_err(self) -> Result<V, HellError> {
-        self.to_hell_err(HellErrorKind::GenericError)
+        self.ok_or_herr(HellErrorKind::GenericError)
     }
 
     fn to_window_hell_err(self) -> Result<V, HellError> {
-        self.to_hell_err(HellErrorKind::WindowError)
+        self.ok_or_herr(HellErrorKind::WindowError)
     }
 
     fn to_render_hell_err(self) -> Result<V, HellError> {
-        self.to_hell_err(HellErrorKind::RenderError)
+        self.ok_or_herr(HellErrorKind::RenderError)
+    }
+
+    fn ok_or_render_herr(self, msg: impl Into<String>) -> HellResult<V> {
+        self.ok_or_else(|| HellError::from_msg(HellErrorKind::RenderError, msg.into()))
     }
 }

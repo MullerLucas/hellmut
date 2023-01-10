@@ -64,6 +64,29 @@ impl<T, const SIZE: usize> DynArray<T, SIZE> {
         self.data[idx] = val;
     }
 
+    pub fn get(&self, idx: usize) -> Option<&T> {
+        self.data.get(idx)
+    }
+
+    pub fn get_mut(&mut self, idx: usize) -> Option<&mut T> {
+        self.data.get_mut(idx)
+    }
+}
+
+impl<T, const SIZE: usize> std::ops::Index<usize> for DynArray<T, SIZE> {
+    type Output = T;
+
+    #[inline]
+    fn index(&self, index: usize) -> &Self::Output {
+        self.data.index(index)
+    }
+}
+
+impl<T, const SIZE: usize> std::ops::IndexMut<usize> for DynArray<T, SIZE> {
+    #[inline]
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        self.data.index_mut(index)
+    }
 }
 
 impl<T, const SIZE: usize> Debug for DynArray<T, SIZE>
