@@ -6,6 +6,15 @@ pub struct DynArray<T, const SIZE: usize> {
     len: usize,
 }
 
+impl<T, const SIZE: usize> Default for DynArray<T, SIZE>
+    where [T; SIZE]: Default,
+{
+    fn default() -> Self {
+        let data: [T; SIZE] = Default::default();
+        Self::new(data, 0)
+    }
+}
+
 impl<T, const SIZE: usize> DynArray<T, SIZE>
     where [T; SIZE]: Default,
 {
