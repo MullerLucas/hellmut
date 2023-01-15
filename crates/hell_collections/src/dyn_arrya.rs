@@ -24,6 +24,22 @@ impl<T, const SIZE: usize> DynArray<T, SIZE>
     }
 }
 
+impl<T, const SIZE: usize> From<&[T]> for DynArray<T, SIZE>
+    where T: Default + Clone
+{
+    fn from(val: &[T]) -> Self {
+        let mut res = Self::from_fn(|idx| {
+            if val.len() > idx {
+                val[idx].clone()
+            } else {
+                T::default()
+            }
+        });
+        res.len = val.len().min(SIZE);
+        res
+    }
+}
+
 impl<T, const SIZE: usize> DynArray<T, SIZE> {
     pub fn new(data: [T; SIZE], len: usize) -> Self {
         if len > SIZE {
@@ -39,6 +55,8 @@ impl<T, const SIZE: usize> DynArray<T, SIZE> {
         let data = array::from_fn(cb);
         Self::new(data, 0)
     }
+
+    // ------------------------------------------------------------------------
 
     pub fn len(&self) -> usize {
         self.len
