@@ -2,3 +2,4 @@
 name = "hell_error"
 version.workspace = true
 edition.workspace = true
+authors.workspace = true
