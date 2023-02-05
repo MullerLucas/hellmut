@@ -1,4 +1,4 @@
-use std::{array, fmt::Debug};
+use std::{array, fmt::{Debug, Display, Pointer}};
 
 
 pub struct DynArray<T, const SIZE: usize> {
@@ -7,20 +7,21 @@ pub struct DynArray<T, const SIZE: usize> {
 }
 
 impl<T, const SIZE: usize> Default for DynArray<T, SIZE>
-    where [T; SIZE]: Default,
+    // where [T; SIZE]: Default,
+    where T: Default,
 {
     fn default() -> Self {
-        let data: [T; SIZE] = Default::default();
-        Self::new(data, 0)
+        // let data: [T; SIZE] = Default::default();
+        // Self::new(data, 0)
+        Self::from_fn(|_| T::default())
     }
 }
 
 impl<T, const SIZE: usize> DynArray<T, SIZE>
-    where [T; SIZE]: Default,
+    where T: Default,
 {
     pub fn from_default() -> Self {
-        let data: [T; SIZE] = Default::default();
-        Self::new(data, 0)
+        Self::from_fn(|_| T::default())
     }
 }
 
@@ -116,11 +117,19 @@ impl<T, const SIZE: usize> std::ops::IndexMut<usize> for DynArray<T, SIZE> {
     }
 }
 
+impl<T, const SIZE: usize> Display for DynArray<T, SIZE>
+    where T: Display,
+{
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.as_slice().fmt(f)
+    }
+}
+
 impl<T, const SIZE: usize> Debug for DynArray<T, SIZE>
     where T: Debug
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("DynArray").field("data", &self.data).field("len", &self.len).finish()
+        self.as_slice().fmt(f)
     }
 }
 
