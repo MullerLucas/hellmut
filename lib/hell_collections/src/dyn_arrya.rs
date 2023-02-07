@@ -25,6 +25,14 @@ impl<T, const SIZE: usize> DynArray<T, SIZE>
     }
 }
 
+impl<T, const SIZE: usize> Into<Vec<T>> for DynArray<T, SIZE>
+    where T: Default + Clone
+{
+    fn into(self) -> Vec<T> {
+        self.to_vec()
+    }
+}
+
 impl<T, const SIZE: usize> From<&[T]> for DynArray<T, SIZE>
     where T: Default + Clone
 {
@@ -98,6 +106,12 @@ impl<T, const SIZE: usize> DynArray<T, SIZE> {
 
     pub fn get_mut(&mut self, idx: usize) -> Option<&mut T> {
         self.data.get_mut(idx)
+    }
+
+    pub fn to_vec(self) -> Vec<T> {
+        let mut v = Vec::with_capacity(self.len());
+        for data in self.data { v.push(data); }
+        v
     }
 }
 
