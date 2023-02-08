@@ -7,21 +7,19 @@ pub struct DynArray<T, const SIZE: usize> {
 }
 
 impl<T, const SIZE: usize> Default for DynArray<T, SIZE>
-    // where [T; SIZE]: Default,
     where T: Default,
 {
     fn default() -> Self {
-        // let data: [T; SIZE] = Default::default();
-        // Self::new(data, 0)
         Self::from_fn(|_| T::default())
     }
 }
 
 impl<T, const SIZE: usize> DynArray<T, SIZE>
-    where T: Default,
+    where [T; SIZE]: Default,
 {
-    pub fn from_default() -> Self {
-        Self::from_fn(|_| T::default())
+    pub fn from_default_array() -> Self {
+        let data: [T; SIZE] = Default::default();
+        Self::new(data, 0)
     }
 }
 
