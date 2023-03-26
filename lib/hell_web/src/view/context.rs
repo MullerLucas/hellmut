@@ -21,11 +21,11 @@ impl ContextInner {
 // ----------------------------------------------------------------------------
 
 #[derive(Debug, Clone)]
-pub struct WebCtx {
+pub struct ViewCtx {
     inner: Rc<ContextInner>,
 }
 
-impl WebCtx {
+impl ViewCtx {
     pub fn new() -> Self {
         let inner = Rc::new(ContextInner::new());
         Self { inner }

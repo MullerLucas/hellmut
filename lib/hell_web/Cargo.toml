@@ -12,13 +12,5 @@ hell_error.workspace = true
 # extern
 wasm-bindgen.workspace = true
 console_error_panic_hook.workspace = true
-
-[dependencies.web-sys]
-version = "0.3.61"
-features = [
-  'Document',
-  'Element',
-  'HtmlElement',
-  'Node',
-  'Window',
-]
+web-sys.workspace = true
+js-sys.workspace = true
