@@ -21,9 +21,6 @@ impl EventHandler {
             .add_event_listener_with_callback(event_type, closure.as_ref().unchecked_ref())
             .unwrap();
 
-        // NOTE: leaking memory
-        // closure.forget();
-
         Ok(Self {
             closure,
         })

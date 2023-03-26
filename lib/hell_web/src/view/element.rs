@@ -37,6 +37,7 @@ impl ElementVariant {
 
 #[derive(Debug)]
 pub struct Element {
+    #[allow(unused)]
     variant: ElementVariant,
     inner: web_sys::Element,
     events: HashMap<&'static str, EventHandler>,
