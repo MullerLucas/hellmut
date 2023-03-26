@@ -74,6 +74,7 @@ pub enum HellErrorKind  {
     WindowError,
     RenderError,
     ResourceError,
+    WebError,
 }
 
 #[derive(Clone, fmt::Debug)]
