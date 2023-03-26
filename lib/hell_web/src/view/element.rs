@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use hell_error::{HellResult, HellError};
-use wasm_bindgen::JsCast;
 use crate::{console_log, view::EventHandler};
 use crate::error::ErrToWebHellErr;
 
@@ -108,6 +107,7 @@ impl TryFrom<web_sys::HtmlElement> for Element {
 }
 
 impl Element {
+    #[inline]
     pub fn inner(&self) -> &web_sys::Element {
         &self.inner
     }
@@ -127,6 +127,25 @@ fn js_array_from_str_slice(val: &[&str]) -> js_sys::Array {
         let _ = init.push(&js_val);
         init
     })
+}
+
+/// Content handling
+impl Element {
+    pub fn inner_html(&self) -> String {
+        self.inner().inner_html()
+    }
+
+    pub fn set_inner_html(&mut self, value: &str) {
+        self.inner().set_inner_html(value);
+    }
+
+    pub fn text_content(&self) -> Option<String> {
+        self.inner().text_content()
+    }
+
+    pub fn set_text_content(&mut self, value: Option<&str>) {
+        self.inner().set_text_content(value);
+    }
 }
 
 /// Class handling

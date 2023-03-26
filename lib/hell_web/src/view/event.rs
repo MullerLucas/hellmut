@@ -1,10 +1,7 @@
-use std::collections::HashMap;
-
 use hell_error::HellResult;
 use wasm_bindgen::{prelude::Closure, JsCast};
-use crate::error::ErrToWebHellErr;
 
-use super::{Element, ElementTree};
+use super::Element;
 
 // ---------------------------------------------------------------------------  -
 
