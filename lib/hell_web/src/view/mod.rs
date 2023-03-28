@@ -9,3 +9,6 @@ pub use presenter::*;
 
 mod event;
 pub use event::*;
+
+mod style;
+pub use style::*;

@@ -1,12 +1,12 @@
 use std::rc::Rc;
 
 #[derive(Debug)]
-pub struct ContextInner {
+pub struct ViewCtxInner {
     window: web_sys::Window,
     document: web_sys::Document,
 }
 
-impl ContextInner {
+impl ViewCtxInner {
     pub fn new() -> Self {
         let window = web_sys::window().expect("no global window exists");
         let document = window.document().expect("should have a document on window");
@@ -22,12 +22,12 @@ impl ContextInner {
 
 #[derive(Debug, Clone)]
 pub struct ViewCtx {
-    inner: Rc<ContextInner>,
+    inner: Rc<ViewCtxInner>,
 }
 
 impl ViewCtx {
     pub fn new() -> Self {
-        let inner = Rc::new(ContextInner::new());
+        let inner = Rc::new(ViewCtxInner::new());
         Self { inner }
     }
 

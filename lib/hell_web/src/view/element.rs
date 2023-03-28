@@ -6,7 +6,25 @@ use crate::error::ErrToWebHellErr;
 
 use super::{ViewCtx, ElementTree};
 
+// ----------------------------------------------------------------------------
 
+macro_rules! declare_create_methods {
+    ($($fn_name:ident : $enum_name:ident),*) => {
+        paste::paste! {
+            impl Element {
+                $(
+                    #[inline]
+                    pub fn [< create_ $fn_name >] (ctx: &ViewCtx) -> HellResult<Self> {
+                        Self::create(ctx, ElementVariant::$enum_name)
+                    }
+                )*
+            }
+        }
+    };
+}
+
+
+// ----------------------------------------------------------------------------
 
 #[derive(Debug)]
 pub enum ElementVariant {
@@ -75,27 +93,14 @@ impl Element {
         let inner: web_sys::Element = ctx.document().create_element(name).to_web_hell_err().unwrap();
         Self::create_internal(variant, inner)
     }
-
-    #[inline]
-    pub fn create_button(ctx: &ViewCtx) -> HellResult<Self> {
-        Self::create(ctx, ElementVariant::Button)
-    }
-
-    #[inline]
-    pub fn create_div(ctx: &ViewCtx) -> HellResult<Self> {
-        Self::create(ctx, ElementVariant::Div)
-    }
-
-    #[inline]
-    pub fn create_paragraph(ctx: &ViewCtx) -> HellResult<Self> {
-        Self::create(ctx, ElementVariant::Paragraph)
-    }
-
-    #[inline]
-    pub fn create_style(ctx: &ViewCtx) -> HellResult<Self> {
-        Self::create(ctx, ElementVariant::Style)
-    }
 }
+declare_create_methods! {
+    button: Button,
+    div: Div,
+    paragraph: Paragraph,
+    style: Style
+}
+
 
 impl TryFrom<web_sys::HtmlElement> for Element {
     type Error = HellError;
@@ -173,6 +178,7 @@ impl Element {
         self.classes.contains(name)
     }
 }
+
 
 /// Event-Handling
 impl Element {
