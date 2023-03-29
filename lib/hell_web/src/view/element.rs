@@ -4,7 +4,7 @@ use hell_error::{HellResult, HellError};
 use crate::{console_log, view::EventHandler};
 use crate::error::ErrToWebHellErr;
 
-use super::{ViewCtx, ElementTree};
+use super::{Runtime, ElementTree};
 
 // ----------------------------------------------------------------------------
 
@@ -14,7 +14,7 @@ macro_rules! declare_create_methods {
             impl Element {
                 $(
                     #[inline]
-                    pub fn [< create_ $fn_name >] (ctx: &ViewCtx) -> HellResult<Self> {
+                    pub fn [< create_ $fn_name >] (ctx: &Runtime) -> HellResult<Self> {
                         Self::create(ctx, ElementVariant::$enum_name)
                     }
                 )*
@@ -88,7 +88,7 @@ impl Element {
         })
     }
 
-    pub fn create(ctx: &ViewCtx, variant: ElementVariant) -> HellResult<Self> {
+    pub fn create(ctx: &Runtime, variant: ElementVariant) -> HellResult<Self> {
         let name = variant.tag_name();
         let inner: web_sys::Element = ctx.document().create_element(name).to_web_hell_err().unwrap();
         Self::create_internal(variant, inner)
