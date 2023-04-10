@@ -1,0 +1,91 @@
+[workspace]
+members = [
+    "lib/*",
+    "bin/*"
+]
+
+exclude = [ ]
+
+
+[profile.release]
+opt-level = 2 # fast and small wasm
+
+# Optimize all dependencies even in debug builds:
+[profile.dev.package."*"]
+opt-level = 2
+
+
+
+
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = [ "helloki@mailbox.org" ]
+# rust-version = "1.65"
+
+
+
+
+[workspace.dependencies]
+# hust
+# ----
+hell_error = { path = "../hust/crates/hell_error" }
+# hellmut
+# -------
+hell_db    = { path = "lib/hell_db" }
+hell_store = { path = "lib/hell_store" }
+hell_ws    = { path = "lib/hell_ws" }
+hell_web   = { path = "lib/hell_web" }
+
+# external
+# --------
+# actix = "0.13.0"
+# actix-web = "4.1.0"
+# actix-web-actors = "4.1.0"
+
+axum = "0.6"
+axum-macros = "0.3.0"
+
+url = "2.3.1"
+
+futures           = "0.3.25"
+futures-util      = "0.3.25"
+futures-channel   = "0.3.25"
+
+tokio             = { version = "1.23.0", features = ["full"] }
+tokio-tungstenite = "0.18.0"
+
+sqlx = { version = "0.6", features = [ "runtime-actix-native-tls" , "mysql", "macros" ] }
+surrealdb = "1.0.0-beta.8"
+
+async-trait = "0.1"
+serde = { version = "1.0", features = [ "derive" ]}
+serde_json = "1.0"
+
+egui = "0.20.0"
+egui_web = "0.17.0"
+# eframe = "0.20.0"
+eframe = { version = "0.20.0", default-dependencies = false, features = [
+    "accesskit",     # Make egui comptaible with screen readers. NOTE: adds a lot of dependencies.
+    "default_fonts", # Embed the default egui fonts.
+    "glow",          # Use the glow rendering backend. Alternative: "wgpu".
+    "persistence",   # Enable restoring app state when restarting the app.
+] }
+
+tracing-subscriber = "0.3.0"
+console_error_panic_hook = "0.1.6"
+tracing-wasm = "0.2"
+# wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4"
+# web-sys = "0.3.60"
+# js-sys = "0.3"
+wasm-bindgen = "0.2.83"
+js-sys = "0.3.60"
+
+
+[workspace.dependencies.web-sys]
+version = "0.3"
+features = [
+    "console"
+]

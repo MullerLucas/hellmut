@@ -1,0 +1,49 @@
+[package]
+name = "hell_ws"
+version.workspace = true
+edition.workspace = true
+
+
+
+[dependencies]
+# hust
+# ----
+hell_error = { workspace = true, features = ["native"] }
+# hellmut
+# -------
+hell_web.workspace = true
+# external
+# --------
+serde.workspace = true
+serde_json.workspace = true
+# native
+url               = { workspace = true, optional = true }
+futures           = { workspace = true, optional = true }
+futures-util      = { workspace = true, optional = true }
+futures-channel   = { workspace = true, optional = true }
+tokio             = { workspace = true, optional = true }
+tokio-tungstenite = { workspace = true, optional = true }
+# web
+wasm-bindgen = { workspace = true, optional = true }
+js-sys       = { workspace = true, optional = true }
+
+[dependencies.web-sys]
+version = "0.3"
+features = [
+    "console",
+
+    "BinaryType",
+    "Blob",
+    "ErrorEvent",
+    "FileReader",
+    "MessageEvent",
+    "ProgressEvent",
+    "WebSocket",
+]
+optional = true
+
+
+
+[features]
+native = ["url", "futures", "futures-util", "futures-channel", "tokio", "tokio-tungstenite"]
+web    = ["wasm-bindgen", "web-sys", "js-sys"]
