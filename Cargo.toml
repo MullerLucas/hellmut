@@ -7,32 +7,18 @@ members = [ "lib/*" ]
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
-authors = [ "helloki <helloki@mailbox.org>" ]
+authors = [ "lucas muller <muller.lucas@mailbox.org>" ]
 
 
 
 [workspace.dependencies]
-# hust
-hell_error = { path = "lib/hell_error" }
-hell_web   = { path = "lib/hell_web" }
+# hellmut
+# -------
+hell_core      = { path = "lib/hell_core" }
+hell_utils_web = { path = "lib/hell_utils" }
 
-# extern
-surrealdb = "1.0.0-beta.8"
-serde = { version = "1.0.86", features = ["derive"]}
-serde_json = "1.0.86"
-
-url = "2.3.1"
-
-actix = "0.13.0"
-actix-web = "4.2.1"
-actix-web-actors = "4.1.0"
-
-futures           = "0.3.25"
-futures-util      = "0.3.25"
-futures-channel   = "0.3.25"
-tokio             = { version = "1.21.2", features = ["full"] }
-tokio-tungstenite = "0.17.2"
-
+# external
+# --------
 # macros
 paste = "1.0.12"
 

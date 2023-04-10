@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use hell_error::{HellResult, HellError};
+use hell_core::error::{HellResult, HellError};
 use crate::{console_log, view::EventHandler};
 use crate::error::ErrToWebHellErr;
 

@@ -1,14 +1,12 @@
 [package]
-name = "hell_web"
-version.workspace = true
-edition.workspace = true
+name = "hell_utils_web"
 authors.workspace = true
-
+edition.workspace = true
+version.workspace = true
 
 [dependencies]
-# hust
-hell_error.workspace = true
-
+# hellmut
+hell_core.workspace = true
 # extern
 wasm-bindgen.workspace = true
 console_error_panic_hook.workspace = true

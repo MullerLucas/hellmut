@@ -2,7 +2,7 @@
 //  err-to-hell-err
 // ----------------------------------------------------------------------------
 
-use hell_error::{HellError, HellErrorKind};
+use hell_core::error::{HellError, HellErrorKind};
 
 pub trait ErrToWebHellErr<V> {
     fn to_web_hell_err(self) -> Result<V, HellError>;
