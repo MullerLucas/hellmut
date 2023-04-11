@@ -19,7 +19,11 @@ extern "C" {
 #[macro_export]
 macro_rules! console_log {
     ($($t:tt)*) => {
-        $crate::logging::log(&format_args!($($t)*).to_string())
+        // HACK (lm): unsafe block only exists to make rust-analyzer shut up about this macro being unsafe
+        #[allow(unused)]
+        unsafe {
+            $crate::logging::log(&format_args!($($t)*).to_string())
+        }
     };
 }
 
