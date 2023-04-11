@@ -1,4 +1,4 @@
-use std::{cell::RefCell, any::Any, marker::PhantomData, borrow::Borrow};
+use std::{cell::RefCell, any::Any, marker::PhantomData};
 use crate::console_log;
 
 
@@ -43,6 +43,10 @@ impl Runtime {
 
     pub fn window(&self)       -> &web_sys::Window      { &self.inner.window }
     pub fn document(&self)     -> &web_sys::Document    { &self.inner.document }
+
+    pub fn signals(&self) -> &RefCell<Vec<InnerSignal>> {
+        &self.inner.signals
+    }
 }
 
 // ----------------------------------------------------------------------------
@@ -62,13 +66,6 @@ impl Runtime {
             id,
             _t: PhantomData,
         }
-    }
-
-    pub fn get_signal<T>(&self, id: SignalId) -> T
-    where T: Clone + 'static
-    {
-        let val = &self.inner.signals.borrow()[id.0];
-        val.downcast_ref::<T>().unwrap().clone()
     }
 }
 
@@ -92,7 +89,19 @@ impl<T> Signal<T> {
     pub fn get(&self) -> T
     where T: Clone + 'static
     {
-        self.cx.get_signal(self.id)
+        self.cx.signals()
+            .borrow()[self.id.0]
+            .downcast_ref::<T>()
+            .unwrap()
+            .clone()
+    }
+
+    pub fn set(&self, val: T)
+    where T: 'static
+    {
+        let wrapper = &mut self.cx.signals().borrow_mut()[self.id.0];
+        let wrapper = wrapper.downcast_mut::<T>().unwrap();
+        *wrapper= val;
     }
 }
 
