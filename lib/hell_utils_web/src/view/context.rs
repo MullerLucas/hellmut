@@ -1,22 +1,28 @@
-use std::{cell::{RefCell, Cell}, any::Any, marker::PhantomData, collections::{HashMap, HashSet}, fmt::Display, borrow::BorrowMut};
-use crate::console_log;
+use std::{cell::{RefCell, Cell}, any::Any, marker::PhantomData, collections::{HashMap, HashSet}, fmt::Display};
+use crate::console_debug;
+
+use super::{Element, ElementId, EventHandler, EventHandlerId};
 
 
 pub type InnerSignalValue = Box<dyn Any>;
 pub type InnerEffect      = Box<(dyn Fn() + 'static)>;
 
 // TODO (lm): look up slot-maps
-pub struct InnerRuntime {
+pub struct InnerContext {
     window: web_sys::Window,
     document: web_sys::Document,
 
     signal_values: RefCell<Vec<InnerSignalValue>>,
     signal_subscribers: RefCell<HashMap<SignalId, HashSet<EffectId>>>,
+
     effects: RefCell<Vec<InnerEffect>>,
     running_effect: Cell<Option<EffectId>>,
+
+    elements: RefCell<Vec<Element>>,
+    element_event_handlers: RefCell<HashMap<ElementId, HashMap<&'static str, EventHandler>>>,
 }
 
-impl InnerRuntime {
+impl InnerContext {
     pub fn new() -> Self {
         let window = web_sys::window().expect("no global window exists");
         let document = window.document().expect("should have a document on window");
@@ -25,6 +31,8 @@ impl InnerRuntime {
         let signal_subscribers = RefCell::new(HashMap::new());
         let effects = RefCell::new(Vec::new());
         let running_effect = Cell::new(None);
+        let elements = RefCell::new(Vec::new());
+        let element_event_handlers = RefCell::new(HashMap::new());
 
         Self {
             window,
@@ -34,6 +42,8 @@ impl InnerRuntime {
             signal_subscribers,
             effects,
             running_effect,
+            elements,
+            element_event_handlers,
         }
     }
 }
@@ -41,19 +51,19 @@ impl InnerRuntime {
 // ----------------------------------------------------------------------------
 
 #[derive(Clone, Copy)]
-pub struct Runtime {
-    inner: &'static InnerRuntime,
+pub struct Context {
+    inner: &'static InnerContext,
 }
 
-impl std::fmt::Debug for Runtime {
+impl std::fmt::Debug for Context {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Runtime").finish()
     }
 }
 
-impl Runtime {
+impl Context {
     pub fn new() -> Self {
-        let inner = Box::leak(Box::new(InnerRuntime::new()));
+        let inner = Box::leak(Box::new(InnerContext::new()));
         Self { inner }
     }
 
@@ -76,19 +86,24 @@ impl Runtime {
     fn effects(&self) -> &RefCell<Vec<InnerEffect>> {
         &self.inner.effects
     }
+
+    #[inline]
+    pub fn elements(&self) -> &RefCell<Vec<Element>> {
+        &self.inner.elements
+    }
 }
 
-impl Runtime {
+impl Context {
     pub fn create_signal<T>(&self, val: T) -> Signal<T>
     where T: Clone +'static
     {
-        console_log!("[SIGNAL]: start creating ...");
+        console_debug!("[SIGNAL]: start creating ...");
 
         let mut signals = self.inner.signal_values.borrow_mut();
         signals.push(Box::new(val));
         let signal_id = SignalId(signals.len() - 1);
 
-        console_log!("[SIGNAL]: created {}", signal_id.0);
+        console_debug!("[SIGNAL]: created {}", signal_id.0);
 
         Signal {
             cx: *self,
@@ -96,9 +111,11 @@ impl Runtime {
             _t: PhantomData,
         }
     }
+}
 
+impl Context {
     pub fn create_effect(&self, effect: impl Fn() + 'static) -> EffectId {
-        console_log!("[EFFECT]: start creating");
+        console_debug!("[EFFECT]: start creating");
 
         let effect_id = {
             let mut effects = self.inner.effects.borrow_mut();
@@ -108,7 +125,7 @@ impl Runtime {
 
         self.run_effect(effect_id);
 
-        console_log!("[EFFECT]: created: '{}'", effect_id);
+        console_debug!("[EFFECT]: created: '{}'", effect_id);
 
         effect_id
     }
@@ -117,11 +134,34 @@ impl Runtime {
         let prev_effect = self.inner.running_effect.take();
         self.inner.running_effect.set(Some(effect_id));
 
-        console_log!("[EFFECT] run: '{}'", effect_id);
+        console_debug!("[EFFECT] run: '{}'", effect_id);
         let effect = &self.effects().borrow()[effect_id.0];
         effect();
 
         self.inner.running_effect.set(prev_effect);
+    }
+}
+
+impl Context {
+    pub fn create_next_element_id(&self) -> ElementId {
+        ElementId(self.inner.elements.borrow().len())
+    }
+
+    pub fn add_element(&self, element: Element) -> ElementId {
+        let mut elements = self.inner.elements.borrow_mut();
+        elements.push(element);
+        ElementId(elements.len() - 1)
+    }
+
+    pub fn get_element(&self, id: ElementId) -> Element {
+        self.inner.elements.borrow()[id.0].clone()
+    }
+
+    pub fn add_event_handler(&self, element_id: ElementId, event_type: &'static str, event_handler: EventHandler) -> EventHandlerId {
+        let mut event_handlers = self.inner.element_event_handlers.borrow_mut();
+        let events = event_handlers.entry(element_id).or_insert(HashMap::new());
+        events.insert(event_type, event_handler);
+        EventHandlerId::new(event_handlers.len() - 1)
     }
 }
 
@@ -149,7 +189,7 @@ impl Display for SignalId {
 
 #[derive(Debug, Clone, Copy)]
 pub struct Signal<T> {
-    cx: Runtime,
+    cx: Context,
     id: SignalId,
     _t: PhantomData<T>
 }
@@ -158,7 +198,7 @@ impl<T> Signal<T> {
     pub fn get(&self) -> T
     where T: Clone + 'static
     {
-        console_log!("[SIGNAL]: get: '{}'", self.id);
+        console_debug!("[SIGNAL]: get: '{}'", self.id);
 
         // retrieve value
         let value = self.cx.signal_values()
@@ -181,7 +221,7 @@ impl<T> Signal<T> {
     pub fn set(&self, val: T)
     where T: 'static
     {
-        console_log!("[SIGNAL]: set: '{}'", self.id);
+        console_debug!("[SIGNAL]: set: '{}'", self.id);
 
         {
             let wrapper = &mut self.cx.signal_values().borrow_mut()[self.id.0];
