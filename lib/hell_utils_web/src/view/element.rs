@@ -33,8 +33,7 @@ where E: Into<Element> + Clone,
 
     let element = f(handle)?;
 
-    let _ = cx.add_element(element.clone());
-    // let element = cx.get_element(id);
+    let _ = cx.add_element(element.clone().into());
     Ok((element, handle))
 }
 
@@ -67,29 +66,14 @@ pub struct ElementHandle {
 }
 
 impl ElementHandle {
+    #[inline]
     pub fn new(cx: Context, id: ElementId) -> Self {
         Self { cx, id }
     }
 
-    pub fn get<E>(&self) -> E
-    where E: From<Element>
-    {
+    #[inline]
+    pub fn get(&self) -> Element {
         self.cx.get_element(self.id)
-    }
-
-    #[inline]
-    pub fn get_element(&self) -> Element {
-        self.get()
-    }
-
-    #[inline]
-    pub fn get_html(&self) -> HtmlElement {
-        self.get()
-    }
-
-    #[inline]
-    pub fn get_input(&self) -> HtmlInputElement {
-        self.get()
     }
 }
 
@@ -133,9 +117,16 @@ pub struct Element {
 }
 
 impl Element {
-    pub fn value(&self) -> String {
-        "test".to_owned()
+    pub fn to_html(self) -> HtmlElement {
+        HtmlElement::from(self)
     }
+
+    pub fn to_input(self) -> HtmlInputElement {
+        HtmlInputElement::from(self)
+    }
+}
+
+impl Element {
     pub fn new(cx: Context, handle: ElementHandle, variant: ElementVariant) -> HellResult<Self> {
         let name = variant.tag_name();
         let js_element: web_sys::Element = cx.document().create_element(name).to_web_hell_err()?;

@@ -147,18 +147,14 @@ impl Context {
         ElementId(self.inner.elements.borrow().len())
     }
 
-    pub fn add_element(&self, element: impl Into<Element>) -> ElementId {
+    pub fn add_element(&self, element: Element) -> ElementId {
         let mut elements = self.inner.elements.borrow_mut();
-        elements.push(element.into());
+        elements.push(element);
         ElementId(elements.len() - 1)
     }
 
-    pub fn get_element<E>(&self, id: ElementId) -> E
-    where E: From<Element>
-    {
-        E::from(
-            self.inner.elements.borrow()[id.0].clone()
-        )
+    pub fn get_element(&self, id: ElementId) -> Element {
+        self.inner.elements.borrow()[id.0].clone()
     }
 
     pub fn add_event_handler(&self, element_id: ElementId, event_type: &'static str, event_handler: EventHandler) -> EventHandlerId {
