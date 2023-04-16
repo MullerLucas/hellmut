@@ -35,6 +35,7 @@ features = [
     "Element",
     "HtmlElement",
     "HtmlButtonElement",
+    "HtmlInputElement",
     "Node",
     "Window",
     "DomTokenList", # class-list

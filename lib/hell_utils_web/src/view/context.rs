@@ -1,7 +1,7 @@
 use std::{cell::{RefCell, Cell}, any::Any, marker::PhantomData, collections::{HashMap, HashSet}, fmt::Display};
 use crate::console_debug;
 
-use super::{Element, ElementId, EventHandler, EventHandlerId};
+use super::{EventHandler, EventHandlerId, ElementId, Element};
 
 
 pub type InnerSignalValue = Box<dyn Any>;
@@ -147,14 +147,18 @@ impl Context {
         ElementId(self.inner.elements.borrow().len())
     }
 
-    pub fn add_element(&self, element: Element) -> ElementId {
+    pub fn add_element(&self, element: impl Into<Element>) -> ElementId {
         let mut elements = self.inner.elements.borrow_mut();
-        elements.push(element);
+        elements.push(element.into());
         ElementId(elements.len() - 1)
     }
 
-    pub fn get_element(&self, id: ElementId) -> Element {
-        self.inner.elements.borrow()[id.0].clone()
+    pub fn get_element<E>(&self, id: ElementId) -> E
+    where E: From<Element>
+    {
+        E::from(
+            self.inner.elements.borrow()[id.0].clone()
+        )
     }
 
     pub fn add_event_handler(&self, element_id: ElementId, event_type: &'static str, event_handler: EventHandler) -> EventHandlerId {

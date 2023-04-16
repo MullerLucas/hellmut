@@ -1,7 +1,5 @@
-use super::Element;
-
 pub trait ElementTree {
-    fn root(&self) -> &Element;
+    fn root(&self) -> &web_sys::Element ;
 }
 
 pub trait Presenter: ElementTree { }
