@@ -60,6 +60,10 @@ impl HellErrorHelper {
     pub fn render_msg_err(msg: impl Into<String>) -> HellError {
         HellError::new(HellErrorKind::RenderError, HellErrorContent::Message(msg.into()))
     }
+
+    pub fn request_msg_err(msg: impl Into<String>) -> HellError {
+        HellError::new(HellErrorKind::RequestError, HellErrorContent::Message(msg.into()))
+    }
 }
 
 
@@ -75,6 +79,7 @@ pub enum HellErrorKind  {
     RenderError,
     ResourceError,
     WebError,
+    RequestError,
 }
 
 #[derive(Clone, fmt::Debug)]
