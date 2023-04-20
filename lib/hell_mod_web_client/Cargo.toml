@@ -1,5 +1,5 @@
 [package]
-name = "hell_utils_web"
+name = "hell_mod_web_client"
 authors.workspace = true
 edition.workspace = true
 version.workspace = true
