@@ -1,6 +1,8 @@
 use core::fmt;
 use std::{result, error, process, sync};
 
+use axum::http::StatusCode;
+
 
 
 pub type HellResult<T> = result::Result<T, HellError>;
@@ -62,7 +64,9 @@ impl HellErrorHelper {
     }
 
     pub fn request_msg_err(msg: impl Into<String>) -> HellError {
-        HellError::new(HellErrorKind::RequestError, HellErrorContent::Message(msg.into()))
+        let msg = msg.into();
+        eprintln!("[ERR]: {msg}");
+        HellError::new(HellErrorKind::RequestError, HellErrorContent::Message(msg))
     }
 }
 
@@ -212,5 +216,23 @@ impl<V> OptToHellErr<V> for Option<V> {
 
     fn ok_or_render_herr(self, msg: impl Into<String>) -> HellResult<V> {
         self.ok_or_else(|| HellError::from_msg(HellErrorKind::RenderError, msg.into()))
+    }
+}
+
+
+// -------------------
+
+impl axum::response::IntoResponse for HellError {
+    fn into_response(self) -> axum::response::Response {
+        let body = match self.inner.kind {
+            HellErrorKind::GenericError => "Generic Error",
+            HellErrorKind::WindowError  => "Window Error",
+            HellErrorKind::RenderError  => "Render Error",
+            HellErrorKind::ResourceError => "Resource Error",
+            HellErrorKind::WebError     => "Web Error",
+            HellErrorKind::RequestError => "Request Error",
+        };
+
+        (StatusCode::INTERNAL_SERVER_ERROR, body).into_response()
     }
 }
