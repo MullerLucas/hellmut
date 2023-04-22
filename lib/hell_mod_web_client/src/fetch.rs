@@ -13,7 +13,7 @@ impl FetchApi {
         opts.method("GET");
         opts.mode(RequestMode::Cors);
 
-        let url = "/models";
+        let url = "/api/models";
         let request = Request::new_with_str_and_init(url, &opts).unwrap();
         request.headers()
             .set("Accept", "application/json").unwrap();
