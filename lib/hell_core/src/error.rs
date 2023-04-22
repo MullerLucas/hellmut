@@ -1,7 +1,6 @@
 use core::fmt;
 use std::{result, error, process, sync};
 
-use axum::http::StatusCode;
 
 
 
@@ -222,8 +221,10 @@ impl<V> OptToHellErr<V> for Option<V> {
 
 // -------------------
 
+#[cfg(feature = "axum")]
 impl axum::response::IntoResponse for HellError {
     fn into_response(self) -> axum::response::Response {
+        use axum::http::StatusCode;
         let body = match self.inner.kind {
             HellErrorKind::GenericError => "Generic Error",
             HellErrorKind::WindowError  => "Window Error",
