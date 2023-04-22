@@ -14,12 +14,13 @@ authors = [ "lucas muller <muller.lucas@mailbox.org>" ]
 [workspace.dependencies]
 # hellmut
 # -------
-hell_core       = { path = "lib/hell_core" }
-hell_utils_web  = { path = "lib/hell_utils" }
-hell_mod_openai = { path = "lib/hell_mod_openai" }
+hell_core        = { path = "lib/hell_core" }
+hell_mod_web     = { path = "lib/hell_mod_web_client" }
+hell_mod_llm     = { path = "lib/hell_mod_llm" }
 
 # external
 # --------
+async-trait              = "0.1.68"
 axum                     = "0.6.16"
 console_error_panic_hook = "0.1.7"
 dotenv                   = "0.15.0"

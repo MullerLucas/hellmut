@@ -1,7 +1,3 @@
-// pub const OPENAI_ORG_ID: &str = "org-wXWnMq5GVAxD5xeJtPqGg5ir";
-// pub const OPENAI_API_KEY: &str ="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";
-
-
 pub struct ApiAuth {
     pub api_key: String,
     pub ord_id: String,
