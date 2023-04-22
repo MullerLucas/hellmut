@@ -8,8 +8,9 @@ version.workspace = true
 # hellmut
 hell_core.workspace = true
 # extern
-wasm-bindgen.workspace = true
 console_error_panic_hook.workspace = true
-web-sys.workspace = true
 js-sys.workspace = true
 paste.workspace = true
+wasm-bindgen.workspace = true
+wasm-bindgen-futures.workspace = true
+web-sys.workspace = true
