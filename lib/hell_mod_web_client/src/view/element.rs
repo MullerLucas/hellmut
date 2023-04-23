@@ -81,29 +81,36 @@ impl ElementHandle {
 
 #[derive(Debug, Clone, Copy)]
 pub enum ElementVariant {
-    Invalid,
-    Html,
-
     Button,
     Div,
+    Html,
+    H1,
+    H2,
+    H3,
+    H4,
+    Invalid,
+    Input,
     Paragraph,
     Style,
     Span,
-    Input,
 }
 
 impl ElementVariant {
     pub fn tag_name(&self) -> &'static str {
         match self {
-            ElementVariant::Invalid     |
-            ElementVariant::Html =>
+            ElementVariant::Invalid   |
+            ElementVariant::Html      =>
                 panic!("trying to get tag-name for an invalid ElementVariant"),
             ElementVariant::Button    => "button",
             ElementVariant::Div       => "div",
+            ElementVariant::H1        => "h1",
+            ElementVariant::H2        => "h2",
+            ElementVariant::H3        => "h3",
+            ElementVariant::H4        => "h4",
+            ElementVariant::Input     => "input",
             ElementVariant::Paragraph => "p",
             ElementVariant::Span      => "span",
             ElementVariant::Style     => "style",
-            ElementVariant::Input     => "input",
         }
     }
 }
@@ -181,6 +188,10 @@ declare_create_methods! {
     paragraph: Paragraph,
     span: Span,
     style: Style,
+    h1: H1,
+    h2: H2,
+    h3: H3,
+    h4: H4,
 }
 
 impl ElementContainer for Element {
