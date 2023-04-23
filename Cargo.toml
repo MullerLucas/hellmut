@@ -42,6 +42,7 @@ features = [
     "Document",
     "DomTokenList", # class-list
     "Element",
+    "KeyboardEvent",
     "HtmlElement",
     "HtmlButtonElement",
     "HtmlInputElement",

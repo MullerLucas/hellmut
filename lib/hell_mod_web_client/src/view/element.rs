@@ -178,12 +178,17 @@ impl Element {
             HtmlInputElement::new(cx, handle)
         })
     }
+
+    pub fn create_button(cx: Context) -> HellResult<(HtmlButtonElement, ElementHandle)> {
+        create_with(cx, |handle| {
+            HtmlButtonElement::new(cx, handle)
+        })
+    }
 }
 
 
 
 declare_create_methods! {
-    button: Button,
     div: Div,
     paragraph: Paragraph,
     span: Span,
@@ -310,11 +315,11 @@ pub trait ElementContainer: Clone {
 
     // event operations
     // ----------------
-    fn add_event_listener<F>(&self, event_type: &'static str, listener: F) -> HellResult<()>
-    where F: FnMut() + 'static
+    fn add_event_listener<C>(&self, event_type: &'static str, cb: C) -> HellResult<()>
+    where C: FnMut(web_sys::Event) + 'static
     {
         let handle = self.handle();
-        let event_handler = EventHandler::from_event(self.js_element(), event_type, listener)?;
+        let event_handler = EventHandler::from_event(self.js_element(), event_type, cb)?;
         handle.cx.add_event_handler(handle.id, event_type, event_handler);
 
         Ok(())
@@ -435,6 +440,64 @@ impl HtmlInputElement {
     pub fn value(&self) -> String {
         self.js_element.value()
     }
+
+    pub fn set_value(&mut self, value: &str) {
+        self.js_element.set_value(value);
+    }
 }
 
 // ----------------------------------------------------------------------------
+
+#[derive(Clone)]
+pub struct HtmlButtonElement {
+    handle: ElementHandle,
+    js_element: web_sys::HtmlButtonElement,
+}
+
+impl From<Element> for HtmlButtonElement {
+    fn from(element: Element) -> Self {
+        Self {
+            handle: element.handle(),
+            js_element: element.js_element.dyn_into().unwrap(),
+        }
+    }
+}
+
+impl From<HtmlButtonElement> for Element {
+    fn from(value: HtmlButtonElement) -> Self {
+        Self {
+            handle: value.handle,
+            js_element: value.js_element.dyn_into().unwrap(),
+        }
+    }
+}
+
+impl ElementContainer for HtmlButtonElement {
+    fn handle(&self) -> ElementHandle {
+        self.handle
+    }
+
+    fn js_element(&self) -> &web_sys::Element {
+        &self.js_element
+    }
+}
+
+impl HtmlButtonElement {
+    pub fn new(cx: Context, handle: ElementHandle) -> HellResult<Self> {
+        let variant = ElementVariant::Button;
+        let js_element: web_sys::HtmlButtonElement = cx.document()
+            .create_element(variant.tag_name())
+            .unwrap()
+            .dyn_into()
+            .unwrap();
+
+        Ok(Self {
+            handle,
+            js_element,
+        })
+    }
+
+    pub fn click(&self) {
+        self.js_element.click();
+    }
+}

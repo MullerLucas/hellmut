@@ -1,5 +1,6 @@
 use hell_core::error::HellResult;
 use wasm_bindgen::{prelude::Closure, JsCast};
+use web_sys::Event;
 
 // ---------------------------------------------------------------------------  -
 
@@ -13,14 +14,14 @@ impl EventHandlerId {
 
 #[derive(Debug)]
 pub struct EventHandler {
-    closure: Closure<dyn FnMut()>
+    closure: Closure<dyn FnMut(Event)>
 }
 
 impl EventHandler {
-    pub fn from_event<F>(element: &web_sys::Element, event_type: &str, callback: F) -> HellResult<Self>
-    where F: FnMut() + 'static
+    pub fn from_event<C>(element: &web_sys::Element, event_type: &str, cb: C) -> HellResult<Self>
+    where C: FnMut(Event) + 'static
     {
-        let closure = Closure::wrap(Box::new(callback) as Box<dyn FnMut()>);
+        let closure = Closure::wrap(Box::new(cb) as Box<dyn FnMut(Event)>);
 
         element
             .add_event_listener_with_callback(event_type, closure.as_ref().unchecked_ref())
