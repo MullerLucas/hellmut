@@ -1,5 +1,5 @@
 use hell_core::error::HellResult;
-use wasm_bindgen::JsCast;
+use wasm_bindgen::{JsCast, JsValue};
 use web_sys::{RequestInit, RequestMode, Request, Response, Window};
 use wasm_bindgen_futures::JsFuture;
 use crate::error::ErrToWebHellErr;
@@ -49,7 +49,8 @@ impl FetchApi {
     where B: serde::Serialize,
           R: serde::de::DeserializeOwned
     {
-        let body = serde_wasm_bindgen::to_value(body)?;
+        let body = serde_json::to_string(body)?;
+        let body = JsValue::from_str(&body);
         opts.body(Some(&body));
         self.fetch_json(url, opts).await
     }
@@ -76,7 +77,7 @@ impl FetchApi {
           R: serde::de::DeserializeOwned
     {
         let mut opts = RequestInit::new();
-        opts.method("POST");
+        opts.method("PUT");
         self.fetch_json_with_body(url, body, opts).await
     }
 
