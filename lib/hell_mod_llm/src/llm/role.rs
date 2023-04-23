@@ -1,4 +1,4 @@
-#[derive(Debug, serde::Serialize, serde::Deserialize, Clone, Copy)]
+#[derive(Debug, Clone, Copy, serde::Serialize, serde::Deserialize)]
 pub enum LlmChatRole {
     System,
     Assistant,

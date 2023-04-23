@@ -240,4 +240,27 @@ impl<T> Signal<T> {
             }
         }
     }
+    pub fn with_mut<C>(&self, mut cb: C)
+    where T: 'static,
+          C: FnMut(&mut T),
+    {
+        console_debug!("[SIGNAL]: set: '{}'", self.id);
+
+        {
+            let wrapper = &mut self.cx.signal_values().borrow_mut()[self.id.0];
+            let wrapper = wrapper.downcast_mut::<T>().unwrap();
+            cb(wrapper);
+        }
+
+        let subs = {
+            let subs = self.cx.inner.signal_subscribers.borrow();
+            subs.get(&self.id).cloned()
+        };
+
+        if let Some(subs) = subs {
+            for s in subs {
+                self.cx.run_effect(s);
+            }
+        }
+    }
 }

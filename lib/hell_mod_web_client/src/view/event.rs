@@ -17,7 +17,7 @@ pub struct EventHandler {
 }
 
 impl EventHandler {
-    pub fn new<F>(element: &web_sys::Element, event_type: &str, callback: F) -> HellResult<Self>
+    pub fn from_event<F>(element: &web_sys::Element, event_type: &str, callback: F) -> HellResult<Self>
     where F: FnMut() + 'static
     {
         let closure = Closure::wrap(Box::new(callback) as Box<dyn FnMut()>);

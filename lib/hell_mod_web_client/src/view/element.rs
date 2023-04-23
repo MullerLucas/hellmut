@@ -211,6 +211,13 @@ pub trait ElementContainer: Clone {
         Ok(())
     }
 
+    fn append_child_unchecked<E>(&mut self, tree: &E)
+    where E: ElementTree
+    {
+        self.append_child(tree).unwrap()
+    }
+
+
     // content operations
     // ------------------
 
@@ -241,10 +248,20 @@ pub trait ElementContainer: Clone {
         classes.add_1(name).to_web_hell_err()
     }
 
+    #[inline]
+    fn add_class_uncheckd(&mut self, name: &str) {
+        self.add_class(name).expect("failed to add single class");
+    }
+
     fn add_classes(&mut self, names: &[&str]) -> HellResult<()> {
         let classes = self.js_element().class_list();
         let names = js_array_from_str_slice(names);
         classes.add(&names).to_web_hell_err()
+    }
+
+    #[inline]
+    fn add_classes_unchecked(&mut self, names: &[&str]) {
+        self.add_classes(names).expect("failed to add multiple classes");
     }
 
     fn remove_class(&mut self, name: &str) -> HellResult<()> {
@@ -283,10 +300,10 @@ pub trait ElementContainer: Clone {
     // event operations
     // ----------------
     fn add_event_listener<F>(&self, event_type: &'static str, listener: F) -> HellResult<()>
-where F: FnMut() + 'static
+    where F: FnMut() + 'static
     {
         let handle = self.handle();
-        let event_handler = EventHandler::new(self.js_element(), event_type, listener)?;
+        let event_handler = EventHandler::from_event(self.js_element(), event_type, listener)?;
         handle.cx.add_event_handler(handle.id, event_type, event_handler);
 
         Ok(())

@@ -5,13 +5,15 @@ use wasm_bindgen_futures::JsFuture;
 use crate::error::ErrToWebHellErr;
 
 
+
+
 #[derive(Debug)]
-pub struct FetchApi {
+pub struct FetchAsync {
     window: Window,
     prefix: String,
 }
 
-impl FetchApi {
+impl FetchAsync {
     pub fn new(window: Window, prefix: impl Into<String>) -> Self {
         Self {
             window,
@@ -20,10 +22,10 @@ impl FetchApi {
     }
 }
 
-impl FetchApi {
+impl FetchAsync {
     #[inline]
-    fn qualify_url(&self, url: &str) -> String {
-        format!("{}/{}", self.prefix, url)
+    pub fn qualify_url(&self, url: &str) -> String {
+        format!("{}/{}", &self.prefix, url)
     }
 
     pub async fn fetch_json<'de, T>(&self, url: &str, mut opts: RequestInit) -> HellResult<T>

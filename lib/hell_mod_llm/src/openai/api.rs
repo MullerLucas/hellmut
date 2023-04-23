@@ -3,7 +3,7 @@
 
 use hell_core::error::{HellErrorHelper, HellResult};
 use reqwest::Client;
-use tracing::{info, error};
+use tracing::{info, error, warn};
 
 use crate::{llm::{api::LlmApi, chat::{LlmChatRequest, LlmChatSuccessResponse}, model::LlmModelList}, openai::chat::OpenaiChatRequest};
 
@@ -19,6 +19,7 @@ pub struct OpenaiApi {
 
 #[async_trait::async_trait]
 impl LlmApi for OpenaiApi {
+    /// only returns newly created assistant messages
     async fn process_chat(&self, data: LlmChatRequest) -> HellResult<LlmChatSuccessResponse> {
         let data = OpenaiChatRequest::from(data);
         info!("start processing chat with data '{:?}' ...", data);
@@ -30,7 +31,7 @@ impl LlmApi for OpenaiApi {
             .send().await?;
 
         if response.status().is_success() {
-            let response = response
+            let response: LlmChatSuccessResponse = response
                 .json::<OpenaiChatSuccessResponse>()
                 .await?
                 .into();

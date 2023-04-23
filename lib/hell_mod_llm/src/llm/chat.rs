@@ -1,6 +1,6 @@
 use super::role::LlmChatRole;
 
-#[derive(Debug, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct LlmChatMessage {
     pub role: LlmChatRole,
     pub content: String,
