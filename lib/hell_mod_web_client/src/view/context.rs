@@ -1,5 +1,5 @@
 use std::{cell::{RefCell, Cell}, any::Any, marker::PhantomData, collections::{HashMap, HashSet}, fmt::Display};
-use crate::console_debug;
+use crate::{console_debug, fetch::FetchApi};
 
 use super::{EventHandler, EventHandlerId, ElementId, Element};
 
@@ -20,6 +20,8 @@ pub struct InnerContext {
 
     elements: RefCell<Vec<Element>>,
     element_event_handlers: RefCell<HashMap<ElementId, HashMap<&'static str, EventHandler>>>,
+
+    fetch: FetchApi,
 }
 
 impl InnerContext {
@@ -34,6 +36,8 @@ impl InnerContext {
         let elements = RefCell::new(Vec::new());
         let element_event_handlers = RefCell::new(HashMap::new());
 
+        let fetch = FetchApi::new(window.clone(), "api");
+
         Self {
             window,
             document,
@@ -44,6 +48,8 @@ impl InnerContext {
             running_effect,
             elements,
             element_event_handlers,
+
+            fetch,
         }
     }
 }
@@ -90,6 +96,10 @@ impl Context {
     #[inline]
     pub fn elements(&self) -> &RefCell<Vec<Element>> {
         &self.inner.elements
+    }
+
+    pub fn fetch(&self) -> &FetchApi {
+        &self.inner.fetch
     }
 }
 
