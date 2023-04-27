@@ -13,7 +13,7 @@ macro_rules! declare_create_methods {
             impl Element {
                 $(
                     #[inline]
-                    pub fn [< create_ $fn_name >] (cx: Context) -> HellResult<CreateResult> {
+                    pub fn [< create_ $fn_name >] (cx: Context) -> HellResult<ElementHandle<Self>> {
                         Self::create(cx, ElementVariant::$enum_name)
                     }
                 )*
@@ -24,17 +24,15 @@ macro_rules! declare_create_methods {
 
 // ----------------------------------------------------------------------------
 
-fn create_with<E, F>(cx: Context, f: F) -> HellResult<(E, ElementHandle)>
+fn create_with<E, F>(cx: Context, f: F) -> HellResult<ElementHandle<E>>
 where E: Into<Element> + Clone,
-      F: Fn(ElementHandle) -> HellResult<E>
+      F: Fn(ElementHandle<E>) -> HellResult<E>
 {
     let id = cx.create_next_element_id();
     let handle = ElementHandle::new(cx, id);
-
     let element = f(handle)?;
-
-    let _ = cx.add_element(element.clone().into());
-    Ok((element, handle))
+    let _ = cx.add_element(element.into());
+    Ok(handle)
 }
 
 // ----------------------------------------------------------------------------
@@ -50,30 +48,63 @@ fn js_array_from_str_slice(val: &[&str]) -> js_sys::Array {
 
 // ----------------------------------------------------------------------------
 
-type CreateResult = (Element, ElementHandle);
-
-// ----------------------------------------------------------------------------
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct ElementId(pub usize);
 
 // ----------------------------------------------------------------------------
 
-#[derive(Debug, Clone, Copy)]
-pub struct ElementHandle {
+#[derive(Debug)]
+pub struct ElementHandle<E> {
     cx: Context,
     id: ElementId,
+    _phantom: std::marker::PhantomData<E>,
 }
 
-impl ElementHandle {
+impl<E> Clone for ElementHandle<E> {
+    fn clone(&self) -> Self {
+        Self {
+            cx: self.cx,
+            id: self.id,
+            _phantom: std::marker::PhantomData,
+        }
+    }
+}
+
+impl <E> Copy for ElementHandle<E> { }
+
+impl<E> ElementHandle<E> {
+    fn from_other<O>(value: ElementHandle<O>) -> Self {
+        Self {
+            cx: value.cx,
+            id: value.id,
+            _phantom: std::marker::PhantomData,
+        }
+    }
+}
+
+impl<E> ElementHandle<E> {
     #[inline]
     pub fn new(cx: Context, id: ElementId) -> Self {
-        Self { cx, id }
+        Self { cx, id, _phantom: std::marker::PhantomData }
     }
 
     #[inline]
-    pub fn get(&self) -> Element {
-        self.cx.get_element(self.id)
+    pub fn get(&self) -> E
+    where E: From<Element>
+    {
+        E::from(
+            self.cx.get_element(self.id)
+        )
+    }
+
+    #[inline]
+    pub fn get_all(self) -> (ElementHandle<E>, E)
+    where E: From<Element>
+    {
+        (
+            self,
+            E::from(self.cx.get_element(self.id))
+        )
     }
 }
 
@@ -119,7 +150,7 @@ impl ElementVariant {
 
 #[derive(Debug, Clone)]
 pub struct Element {
-    handle: ElementHandle,
+    handle: ElementHandle<Self>,
     js_element: web_sys::Element,
 }
 
@@ -134,7 +165,7 @@ impl Element {
 }
 
 impl Element {
-    pub fn new(cx: Context, handle: ElementHandle, variant: ElementVariant) -> HellResult<Self> {
+    pub fn new(cx: Context, handle: ElementHandle<Self>, variant: ElementVariant) -> HellResult<Self> {
         let name = variant.tag_name();
         let js_element: web_sys::Element = cx.document().create_element(name).to_web_hell_err()?;
 
@@ -144,27 +175,25 @@ impl Element {
         })
     }
 
-    pub fn create(cx: Context, variant: ElementVariant) -> HellResult<CreateResult> {
+    pub fn create(cx: Context, variant: ElementVariant) -> HellResult<ElementHandle<Self>> {
         let id = cx.create_next_element_id();
         let handle = ElementHandle::new(cx, id);
-
         let element = Element::new(cx, handle, variant)?;
-
-        let _ = cx.add_element(element.clone());
-        Ok((element, handle))
+        let _ = cx.add_element(element);
+        Ok(handle)
     }
 
     pub fn as_input_element(&self) -> HellResult<web_sys::HtmlInputElement> {
         Ok(self.js_element().clone().dyn_into::<web_sys::HtmlInputElement>().unwrap())
     }
 
-    pub fn create_html(cx: Context) -> HellResult<(HtmlElement, ElementHandle)> {
+    pub fn create_html(cx: Context) -> HellResult<ElementHandle<HtmlElement>> {
         create_with(cx, |handle| {
             HtmlElement::new(cx, handle)
         })
     }
 
-    pub fn create_body(cx: Context) -> HellResult<(HtmlElement, ElementHandle)> {
+    pub fn create_body(cx: Context) -> HellResult<ElementHandle<HtmlElement>> {
         create_with(cx, |handle| {
             Ok(HtmlElement {
                 handle,
@@ -173,13 +202,13 @@ impl Element {
         })
     }
 
-    pub fn create_input(cx: Context) -> HellResult<(HtmlInputElement, ElementHandle)> {
+    pub fn create_input(cx: Context) -> HellResult<ElementHandle<HtmlInputElement>> {
         create_with(cx, |handle| {
             HtmlInputElement::new(cx, handle)
         })
     }
 
-    pub fn create_button(cx: Context) -> HellResult<(HtmlButtonElement, ElementHandle)> {
+    pub fn create_button(cx: Context) -> HellResult<ElementHandle<HtmlButtonElement>> {
         create_with(cx, |handle| {
             HtmlButtonElement::new(cx, handle)
         })
@@ -200,7 +229,7 @@ declare_create_methods! {
 }
 
 impl ElementContainer for Element {
-    fn handle(&self) -> ElementHandle {
+    fn handle(&self) -> ElementHandle<Self> {
         self.handle
     }
 
@@ -217,7 +246,7 @@ impl<E> ElementTree for E where E: ElementContainer + 'static {
 
 
 pub trait ElementContainer: Clone {
-    fn handle(&self) -> ElementHandle;
+    fn handle(&self) -> ElementHandle<Self>;
     fn js_element(&self) -> &web_sys::Element;
 
     fn append_child<E>(&mut self, tree: &E) -> HellResult<()>
@@ -338,14 +367,14 @@ pub trait ElementContainer: Clone {
 
 #[derive(Clone)]
 pub struct HtmlElement {
-    handle: ElementHandle,
+    handle: ElementHandle<Self>,
     js_element: web_sys::HtmlElement,
 }
 
 impl From<Element> for HtmlElement {
     fn from(element: Element) -> Self {
         Self {
-            handle: element.handle(),
+            handle: ElementHandle::from_other(element.handle()),
             js_element: element.js_element.dyn_into().unwrap(),
         }
     }
@@ -353,15 +382,20 @@ impl From<Element> for HtmlElement {
 
 impl From<HtmlElement> for Element {
     fn from(value: HtmlElement) -> Self {
+        let handle = ElementHandle {
+            cx: value.handle.cx,
+            id: value.handle.id,
+            _phantom: std::marker::PhantomData,
+        };
         Self {
-            handle: value.handle,
+            handle,
             js_element: value.js_element.dyn_into().unwrap(),
         }
     }
 }
 
 impl HtmlElement {
-    pub fn new(cx: Context, handle: ElementHandle) -> HellResult<Self> {
+    pub fn new(cx: Context, handle: ElementHandle<Self>) -> HellResult<Self> {
         let variant = ElementVariant::Input;
         let js_element: web_sys::HtmlElement = cx.document()
             .create_element(variant.tag_name())
@@ -377,7 +411,7 @@ impl HtmlElement {
 }
 
 impl ElementContainer for HtmlElement {
-    fn handle(&self) -> ElementHandle {
+    fn handle(&self) -> ElementHandle<Self> {
         self.handle
     }
 
@@ -390,14 +424,14 @@ impl ElementContainer for HtmlElement {
 
 #[derive(Clone)]
 pub struct HtmlInputElement {
-    handle: ElementHandle,
+    handle: ElementHandle<Self>,
     js_element: web_sys::HtmlInputElement,
 }
 
 impl From<Element> for HtmlInputElement {
     fn from(element: Element) -> Self {
         Self {
-            handle: element.handle(),
+            handle: ElementHandle::from_other(element.handle()),
             js_element: element.js_element.dyn_into().unwrap(),
         }
     }
@@ -406,14 +440,14 @@ impl From<Element> for HtmlInputElement {
 impl From<HtmlInputElement> for Element {
     fn from(value: HtmlInputElement) -> Self {
         Self {
-            handle: value.handle,
+            handle: ElementHandle::from_other(value.handle()),
             js_element: value.js_element.dyn_into().unwrap(),
         }
     }
 }
 
 impl ElementContainer for HtmlInputElement {
-    fn handle(&self) -> ElementHandle {
+    fn handle(&self) -> ElementHandle<Self> {
         self.handle
     }
 
@@ -423,7 +457,7 @@ impl ElementContainer for HtmlInputElement {
 }
 
 impl HtmlInputElement {
-    pub fn new(cx: Context, handle: ElementHandle) -> HellResult<Self> {
+    pub fn new(cx: Context, handle: ElementHandle<Self>) -> HellResult<Self> {
         let variant = ElementVariant::Input;
         let js_element: web_sys::HtmlInputElement = cx.document()
             .create_element(variant.tag_name())
@@ -450,15 +484,15 @@ impl HtmlInputElement {
 
 #[derive(Clone)]
 pub struct HtmlButtonElement {
-    handle: ElementHandle,
+    handle: ElementHandle<Self>,
     js_element: web_sys::HtmlButtonElement,
 }
 
 impl From<Element> for HtmlButtonElement {
-    fn from(element: Element) -> Self {
+    fn from(value: Element) -> Self {
         Self {
-            handle: element.handle(),
-            js_element: element.js_element.dyn_into().unwrap(),
+            handle: ElementHandle::from_other(value.handle()),
+            js_element: value.js_element.dyn_into().unwrap(),
         }
     }
 }
@@ -466,15 +500,15 @@ impl From<Element> for HtmlButtonElement {
 impl From<HtmlButtonElement> for Element {
     fn from(value: HtmlButtonElement) -> Self {
         Self {
-            handle: value.handle,
+            handle: ElementHandle::from_other(value.handle()),
             js_element: value.js_element.dyn_into().unwrap(),
         }
     }
 }
 
 impl ElementContainer for HtmlButtonElement {
-    fn handle(&self) -> ElementHandle {
-        self.handle
+    fn handle(&self) -> ElementHandle<Self> {
+        self.handle.clone()
     }
 
     fn js_element(&self) -> &web_sys::Element {
@@ -483,7 +517,7 @@ impl ElementContainer for HtmlButtonElement {
 }
 
 impl HtmlButtonElement {
-    pub fn new(cx: Context, handle: ElementHandle) -> HellResult<Self> {
+    pub fn new(cx: Context, handle: ElementHandle<Self>) -> HellResult<Self> {
         let variant = ElementVariant::Button;
         let js_element: web_sys::HtmlButtonElement = cx.document()
             .create_element(variant.tag_name())

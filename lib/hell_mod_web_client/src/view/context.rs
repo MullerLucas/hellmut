@@ -187,12 +187,24 @@ impl Display for SignalId {
 
 // ----------------------------------------------
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug)]
 pub struct Signal<T> {
     cx: Context,
     id: SignalId,
     _t: PhantomData<T>
 }
+
+impl<T> Clone for Signal<T> {
+    fn clone(&self) -> Self {
+        Self {
+            cx: self.cx,
+            id: self.id,
+            _t: PhantomData,
+        }
+    }
+}
+
+impl<T> Copy for Signal<T> {}
 
 impl<T> Signal<T> {
     pub fn get(&self) -> T
