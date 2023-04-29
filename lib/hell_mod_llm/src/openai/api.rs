@@ -3,7 +3,7 @@
 
 use hell_core::error::{HellErrorHelper, HellResult};
 use reqwest::Client;
-use tracing::{info, error, warn};
+use tracing::{info, error};
 
 use crate::{llm::{api::LlmApi, chat::{LlmChatRequest, LlmChatSuccessResponse}, model::LlmModelList}, openai::chat::OpenaiChatRequest};
 

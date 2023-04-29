@@ -1,6 +1,6 @@
 use hell_core::error::{HellErrorHelper, HellResult};
 
-use crate::llm::{role::LlmChatRole, chat::{LlmChatMessage, LlmChatRequest, LlmChatSuccessResponse}};
+use crate::llm::{role::LlmChatRole, chat::{LlmChatMsg, LlmChatRequest, LlmChatSuccessResponse}};
 use super::{model::OpenaiLangModel, role::OpenaiChatRole};
 
 
@@ -12,7 +12,7 @@ pub struct OpenaiChatMessage {
     pub content: String,
 }
 
-impl From<OpenaiChatMessage> for LlmChatMessage {
+impl From<OpenaiChatMessage> for LlmChatMsg {
     fn from(value: OpenaiChatMessage) -> Self {
         Self {
             role: LlmChatRole::from(value.role),
@@ -21,8 +21,8 @@ impl From<OpenaiChatMessage> for LlmChatMessage {
     }
 }
 
-impl From<LlmChatMessage> for OpenaiChatMessage {
-    fn from(value: LlmChatMessage) -> Self {
+impl From<LlmChatMsg> for OpenaiChatMessage {
+    fn from(value: LlmChatMsg) -> Self {
         Self {
             role: OpenaiChatRole::from(value.role),
             content: value.content,

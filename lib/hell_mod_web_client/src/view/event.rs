@@ -2,6 +2,8 @@ use hell_core::error::HellResult;
 use wasm_bindgen::{prelude::Closure, JsCast};
 use web_sys::Event;
 
+use crate::{error::ErrToWebHellErr, console_error};
+
 // ---------------------------------------------------------------------------  -
 
 pub struct EventHandlerId(usize);
@@ -25,7 +27,11 @@ impl EventHandler {
 
         element
             .add_event_listener_with_callback(event_type, closure.as_ref().unchecked_ref())
-            .unwrap();
+            .to_web_hell_err()
+            .map_err(|e| {
+                console_error!("failed to add event listener: {:?}", e);
+                e
+            })?;
 
         Ok(Self {
             closure,

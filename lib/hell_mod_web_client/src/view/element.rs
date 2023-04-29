@@ -1,6 +1,7 @@
 use hell_core::error::HellResult;
 use wasm_bindgen::JsCast;
-use crate::view::EventHandler;
+use web_sys::DomTokenList;
+use crate::{view::EventHandler, console_error};
 use crate::error::ErrToWebHellErr;
 
 use super::{Context, ElementTree};
@@ -148,10 +149,19 @@ impl ElementVariant {
 
 // ----------------------------------------------------------------------------
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct Element {
     handle: ElementHandle<Self>,
     js_element: web_sys::Element,
+}
+
+impl Clone for Element {
+    fn clone(&self) -> Self {
+        Self {
+            handle: self.handle,
+            js_element: self.js_element.clone()
+        }
+    }
 }
 
 impl Element {
@@ -252,7 +262,10 @@ pub trait ElementContainer: Clone {
     fn append_child<E>(&mut self, tree: &E) -> HellResult<()>
     where E: ElementTree
     {
-        let _ = self.js_element().append_child(tree.root()).to_web_hell_err()?;
+        let _ = self.js_element().append_child(tree.root()).to_web_hell_err().map_err(|e| {
+            console_error!("failed to append child: {:?}", e);
+            e
+        });
         Ok(())
     }
 
@@ -288,9 +301,20 @@ pub trait ElementContainer: Clone {
 
     // class operations
     // ----------------
+    fn class_list(&self) -> DomTokenList {
+        self.js_element().class_list()
+    }
+
+    fn class_name(&self) -> String {
+        self.js_element().class_name()
+    }
+
     fn add_class(&mut self, name: &str) -> HellResult<()> {
         let classes = self.js_element().class_list();
-        classes.add_1(name).to_web_hell_err()
+        classes.add_1(name).to_web_hell_err().map_err(|e| {
+            console_error!("failed to add class: {:?}", e);
+            e
+        })
     }
 
     #[inline]
@@ -301,7 +325,10 @@ pub trait ElementContainer: Clone {
     fn add_classes(&mut self, names: &[&str]) -> HellResult<()> {
         let classes = self.js_element().class_list();
         let names = js_array_from_str_slice(names);
-        classes.add(&names).to_web_hell_err()
+        classes.add(&names).to_web_hell_err().map_err(|e| {
+            console_error!("failed to add classes: {:?}", e);
+            e
+        })
     }
 
     #[inline]
@@ -311,13 +338,19 @@ pub trait ElementContainer: Clone {
 
     fn remove_class(&mut self, name: &str) -> HellResult<()> {
         let classes = self.js_element().class_list();
-        classes.remove_1(name).to_web_hell_err()
+        classes.remove_1(name).to_web_hell_err().map_err(|e| {
+            console_error!("failed to remove class: {:?}", e);
+            e
+        })
     }
 
     fn remove_classes(&mut self, names: &[&str]) -> HellResult<()> {
         let classes = self.js_element().class_list();
         let names = js_array_from_str_slice(names);
-        classes.remove(&names).to_web_hell_err()
+        classes.remove(&names).to_web_hell_err().map_err(|e| {
+            console_error!("failed to remove classes: {:?}", e);
+            e
+        })
     }
 
     fn contains_class(&mut self, name: &str) -> bool {
@@ -329,7 +362,10 @@ pub trait ElementContainer: Clone {
     // --------------------
     #[inline]
     fn set_attribute(&mut self, name: &str, value: &str) -> HellResult<()> {
-        self.js_element().set_attribute(name, value).to_web_hell_err()
+        self.js_element().set_attribute(name, value).to_web_hell_err().map_err(|e| {
+            console_error!("failed to set attribute: {:?}", e);
+            e
+        })
     }
 
     #[inline]
@@ -350,7 +386,6 @@ pub trait ElementContainer: Clone {
         let handle = self.handle();
         let event_handler = EventHandler::from_event(self.js_element(), event_type, cb)?;
         handle.cx.add_event_handler(handle.id, event_type, event_handler);
-
         Ok(())
     }
 
@@ -533,5 +568,13 @@ impl HtmlButtonElement {
 
     pub fn click(&self) {
         self.js_element.click();
+    }
+
+    pub fn set_disable(&mut self, value: bool) {
+        self.js_element.set_disabled(value)
+    }
+
+    pub fn disable(&mut self) -> bool {
+        self.js_element.disabled()
     }
 }

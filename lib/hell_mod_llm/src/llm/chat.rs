@@ -1,12 +1,12 @@
 use super::role::LlmChatRole;
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-pub struct LlmChatMessage {
+pub struct LlmChatMsg {
     pub role: LlmChatRole,
     pub content: String,
 }
 
-impl LlmChatMessage {
+impl LlmChatMsg {
     pub fn new(role: LlmChatRole, content: impl Into<String>) -> Self {
         Self {
             role,
@@ -31,7 +31,7 @@ impl LlmChatMessage {
 
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct LlmChatSuccessResponse {
-    pub messages: Vec<LlmChatMessage>,
+    pub messages: Vec<LlmChatMsg>,
 }
 
 // ----------------------------------------------------------------------------
@@ -39,12 +39,12 @@ pub struct LlmChatSuccessResponse {
 #[derive(Debug, serde::Serialize, serde::Deserialize)]
 pub struct LlmChatRequest {
     pub model: String,
-    pub messages: Vec<LlmChatMessage>,
+    pub messages: Vec<LlmChatMsg>,
     pub temperature: f32,
 }
 
 impl LlmChatRequest {
-    pub fn new(model: impl Into<String>, messages: Vec<LlmChatMessage>, temperature: f32) -> Self {
+    pub fn new(model: impl Into<String>, messages: Vec<LlmChatMsg>, temperature: f32) -> Self {
         Self {
             model: model.into(),
             messages,

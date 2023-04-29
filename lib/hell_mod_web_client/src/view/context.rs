@@ -22,6 +22,12 @@ pub struct InnerContext {
     element_event_handlers: RefCell<HashMap<ElementId, HashMap<&'static str, EventHandler>>>,
 }
 
+impl Default for InnerContext {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl InnerContext {
     pub fn new() -> Self {
         let window = web_sys::window().expect("no global window exists");
@@ -134,7 +140,7 @@ impl Context {
         let prev_effect = self.inner.running_effect.take();
         self.inner.running_effect.set(Some(effect_id));
 
-        console_debug!("[EFFECT] run: '{}'", effect_id);
+        console_debug!("[EFFECT]: run: '{}'", effect_id);
         let effect = &self.effects().borrow()[effect_id.0];
         effect();
 
@@ -219,13 +225,7 @@ impl<T> Signal<T> {
             .unwrap()
             .clone();
 
-        // run effect initially
-        if let Some(running_effect_id) = self.cx.inner.running_effect.get() {
-            let mut subs = self.cx.inner.signal_subscribers.borrow_mut();
-            let subs = subs.entry(self.id).or_default();
-            let _newly_inserted = subs.insert(running_effect_id);
-            // assert!(newly_inserted);
-        }
+        self.try_add_sub();
 
         value
     }
@@ -241,22 +241,29 @@ impl<T> Signal<T> {
             *wrapper = val;
         }
 
-        let subs = {
-            let subs = self.cx.inner.signal_subscribers.borrow();
-            subs.get(&self.id).cloned()
-        };
+        self.run_effects_on_subs();
+    }
 
-        if let Some(subs) = subs {
-            for s in subs {
-                self.cx.run_effect(s);
-            }
+    pub fn with_ref<C>(&self, mut cb: C)
+    where T: 'static,
+          C: FnMut(&T),
+    {
+        console_debug!("[SIGNAL]: with: '{}'", self.id);
+        self.try_add_sub();
+
+        {
+            let wrapper = &mut self.cx.signal_values().borrow_mut()[self.id.0];
+            let wrapper = wrapper.downcast_ref::<T>().unwrap();
+            cb(wrapper);
         }
     }
+
     pub fn with_mut<C>(&self, mut cb: C)
     where T: 'static,
           C: FnMut(&mut T),
     {
-        console_debug!("[SIGNAL]: set: '{}'", self.id);
+        console_debug!("[SIGNAL]: with_mut: '{}'", self.id);
+        self.try_add_sub();
 
         {
             let wrapper = &mut self.cx.signal_values().borrow_mut()[self.id.0];
@@ -264,15 +271,41 @@ impl<T> Signal<T> {
             cb(wrapper);
         }
 
+        self.run_effects_on_subs();
+    }
+}
+
+impl<T> Signal<T> {
+    fn try_add_sub(&self) {
+        console_debug!("try add sub: '{}''", self.id);
+        // run effect initially
+        if let Some(running_effect_id) = self.cx.inner.running_effect.get() {
+            console_debug!("add sub: '{}' - '{}'", self.id, running_effect_id);
+            let mut subs = self.cx.inner.signal_subscribers.borrow_mut();
+            let subs = subs.entry(self.id).or_default();
+            let _newly_inserted = subs.insert(running_effect_id);
+            // assert!(newly_inserted);
+        }
+    }
+
+    fn run_effects_on_subs(&self) {
         let subs = {
             let subs = self.cx.inner.signal_subscribers.borrow();
             subs.get(&self.id).cloned()
         };
 
+        console_debug!("[SIGNAL]: run_effects_on_subs: '{}'", self.id);
+
         if let Some(subs) = subs {
-            for s in subs {
-                self.cx.run_effect(s);
-            }
+            if let Some(running_effect) = self.cx.inner.running_effect.get() {
+                for s in subs.into_iter().filter(|s| *s != running_effect) {
+                    self.cx.run_effect(s);
+                }
+            } else {
+                for s in subs {
+                    self.cx.run_effect(s);
+                }
+            };
         }
     }
 }
