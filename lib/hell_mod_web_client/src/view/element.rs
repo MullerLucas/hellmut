@@ -309,9 +309,9 @@ pub trait ElementContainer: Clone {
         self.js_element().class_name()
     }
 
-    fn add_class(&mut self, name: &str) -> HellResult<()> {
+    fn add_class(&mut self, name: impl AsRef<str>) -> HellResult<()> {
         let classes = self.js_element().class_list();
-        classes.add_1(name).to_web_hell_err().map_err(|e| {
+        classes.add_1(name.as_ref()).to_web_hell_err().map_err(|e| {
             console_error!("failed to add class: {:?}", e);
             e
         })
