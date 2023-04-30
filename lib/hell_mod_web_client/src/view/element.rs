@@ -38,9 +38,9 @@ where E: Into<Element> + Clone,
 
 // ----------------------------------------------------------------------------
 
-fn js_array_from_str_slice(val: &[&str]) -> js_sys::Array {
+fn js_array_from_str_slice(val: &[impl AsRef<str>]) -> js_sys::Array {
     val.iter().fold(js_sys::Array::new_with_length(val.len() as u32), |init, n| {
-        let js_val = wasm_bindgen::JsValue::from_str(n);
+        let js_val = wasm_bindgen::JsValue::from_str(n.as_ref());
         let _ = init.push(&js_val);
         init
     })
@@ -122,6 +122,9 @@ pub enum ElementVariant {
     H4,
     Invalid,
     Input,
+    Header,
+    Main,
+    Footer,
     Paragraph,
     Style,
     Span,
@@ -140,9 +143,12 @@ impl ElementVariant {
             ElementVariant::H3        => "h3",
             ElementVariant::H4        => "h4",
             ElementVariant::Input     => "input",
+            ElementVariant::Main      => "main",
             ElementVariant::Paragraph => "p",
             ElementVariant::Span      => "span",
             ElementVariant::Style     => "style",
+            ElementVariant::Header    => "header",
+            ElementVariant::Footer    => "footer",
         }
     }
 }
@@ -236,6 +242,9 @@ declare_create_methods! {
     h2: H2,
     h3: H3,
     h4: H4,
+    main: Main,
+    header: Header,
+    footer: Footer,
 }
 
 impl ElementContainer for Element {
@@ -299,6 +308,16 @@ pub trait ElementContainer: Clone {
         self.js_element().set_text_content(value);
     }
 
+    // id operations
+    // -------------
+    fn id(&self) -> String {
+        self.js_element().id()
+    }
+
+    fn set_id(&mut self, value: impl AsRef<str>) {
+        self.js_element().set_id(value.as_ref())
+    }
+
     // class operations
     // ----------------
     fn class_list(&self) -> DomTokenList {
@@ -322,7 +341,7 @@ pub trait ElementContainer: Clone {
         self.add_class(name).expect("failed to add single class");
     }
 
-    fn add_classes(&mut self, names: &[&str]) -> HellResult<()> {
+    fn add_classes(&mut self, names: &[impl AsRef<str>]) -> HellResult<()> {
         let classes = self.js_element().class_list();
         let names = js_array_from_str_slice(names);
         classes.add(&names).to_web_hell_err().map_err(|e| {
