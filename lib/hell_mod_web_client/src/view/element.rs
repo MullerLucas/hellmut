@@ -1,7 +1,6 @@
 use hell_core::error::HellResult;
 use wasm_bindgen::JsCast;
 use web_sys::DomTokenList;
-use crate::console_warn;
 use crate::{view::EventHandler, console_error};
 use crate::error::ErrToWebHellErr;
 
@@ -15,7 +14,7 @@ macro_rules! declare_create_methods {
             impl Element {
                 $(
                     #[inline]
-                    pub fn [< create_ $fn_name >] (cx: Context) -> HellResult<ElementHandle<Self>> {
+                    pub fn [< create_ $fn_name >] (cx: Context) -> HellResult<Self> {
                         Self::create(cx, ElementVariant::$enum_name)
                     }
                 )*
@@ -26,15 +25,15 @@ macro_rules! declare_create_methods {
 
 // ----------------------------------------------------------------------------
 
-fn create_with<E, F>(cx: Context, f: F) -> HellResult<ElementHandle<E>>
+fn create_with<E, F>(cx: Context, f: F) -> HellResult<E>
 where E: Into<Element> + Clone,
       F: Fn(ElementHandle<E>) -> HellResult<E>
 {
     let id = cx.create_next_element_id();
     let handle = ElementHandle::new(cx, id);
     let element = f(handle)?;
-    let _ = cx.add_element(element.into());
-    Ok(handle)
+    let _ = cx.add_element(element.clone().into());
+    Ok(element)
 }
 
 // ----------------------------------------------------------------------------
@@ -195,12 +194,12 @@ impl Element {
         })
     }
 
-    pub fn create(cx: Context, variant: ElementVariant) -> HellResult<ElementHandle<Self>> {
+    pub fn create(cx: Context, variant: ElementVariant) -> HellResult<Self> {
         let id = cx.create_next_element_id();
         let handle = ElementHandle::new(cx, id);
         let element = Element::new(cx, handle, variant)?;
-        let _ = cx.add_element(element);
-        Ok(handle)
+        let _ = cx.add_element(element.clone());
+        Ok(element)
     }
 
     pub fn as_input_element(&self) -> HellResult<web_sys::HtmlInputElement> {
@@ -213,7 +212,7 @@ impl Element {
     //     })
     // }
 
-    pub fn create_html(cx: Context) -> HellResult<ElementHandle<HtmlElement>> {
+    pub fn create_html(cx: Context) -> HellResult<HtmlElement> {
         create_with(cx, |handle| {
             Ok(HtmlElement {
                 handle,
@@ -227,7 +226,7 @@ impl Element {
         })
     }
 
-    pub fn create_body(cx: Context) -> HellResult<ElementHandle<HtmlElement>> {
+    pub fn create_body(cx: Context) -> HellResult<HtmlElement> {
         create_with(cx, |handle| {
             Ok(HtmlElement {
                 handle,
@@ -236,13 +235,13 @@ impl Element {
         })
     }
 
-    pub fn create_input(cx: Context) -> HellResult<ElementHandle<HtmlInputElement>> {
+    pub fn create_input(cx: Context) -> HellResult<HtmlInputElement> {
         create_with(cx, |handle| {
             HtmlInputElement::new(cx, handle)
         })
     }
 
-    pub fn create_button(cx: Context) -> HellResult<ElementHandle<HtmlButtonElement>> {
+    pub fn create_button(cx: Context) -> HellResult<HtmlButtonElement> {
         create_with(cx, |handle| {
             HtmlButtonElement::new(cx, handle)
         })
@@ -283,8 +282,13 @@ impl<E> ElementTree for E where E: ElementContainer + 'static {
 
 
 pub trait ElementContainer: Clone {
-    fn handle(&self) -> ElementHandle<Self>;
     fn js_element(&self) -> &web_sys::Element;
+    fn handle(&self) -> ElementHandle<Self>;
+
+    fn with_handle(self) -> (Self, ElementHandle<Self>) {
+        let handle = self.handle();
+        (self, handle)
+    }
 
     fn append_child<E>(&mut self, tree: &E) -> HellResult<()>
     where E: ElementTree
@@ -360,8 +364,13 @@ pub trait ElementContainer: Clone {
     }
 
     #[inline]
-    fn add_class_uncheckd(&mut self, name: &str) {
+    fn add_class_uncheckd(&mut self, name: impl AsRef<str>) {
         self.add_class(name).expect("failed to add single class");
+    }
+
+    fn with_class(mut self, name: impl AsRef<str>) -> HellResult<Self> {
+        self.add_class(name)?;
+        Ok(self)
     }
 
     fn add_classes(&mut self, names: &[impl AsRef<str>]) -> HellResult<()> {
