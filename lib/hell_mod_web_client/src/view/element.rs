@@ -1,6 +1,7 @@
 use hell_core::error::HellResult;
 use wasm_bindgen::JsCast;
 use web_sys::DomTokenList;
+use crate::console_warn;
 use crate::{view::EventHandler, console_error};
 use crate::error::ErrToWebHellErr;
 
@@ -39,11 +40,14 @@ where E: Into<Element> + Clone,
 // ----------------------------------------------------------------------------
 
 fn js_array_from_str_slice(val: &[impl AsRef<str>]) -> js_sys::Array {
-    val.iter().fold(js_sys::Array::new_with_length(val.len() as u32), |init, n| {
-        let js_val = wasm_bindgen::JsValue::from_str(n.as_ref());
-        let _ = init.push(&js_val);
-        init
-    })
+    let result = js_sys::Array::new_with_length(val.len() as u32);
+
+    for (i, val) in val.iter().enumerate() {
+        let js_val = wasm_bindgen::JsValue::from_str(val.as_ref());
+        result.set(i as u32, js_val);
+    }
+
+    result
 }
 
 
@@ -203,9 +207,23 @@ impl Element {
         Ok(self.js_element().clone().dyn_into::<web_sys::HtmlInputElement>().unwrap())
     }
 
+    // pub fn create_html(cx: Context) -> HellResult<ElementHandle<HtmlElement>> {
+    //     create_with(cx, |handle| {
+    //         HtmlElement::new(cx, handle)
+    //     })
+    // }
+
     pub fn create_html(cx: Context) -> HellResult<ElementHandle<HtmlElement>> {
         create_with(cx, |handle| {
-            HtmlElement::new(cx, handle)
+            Ok(HtmlElement {
+                handle,
+                js_element: cx.document().query_selector("html").to_web_hell_err().map_err(|e| {
+                    console_error!("failed to get html element: {:?}", e);
+                    e
+                })?
+                    .expect("expected there to be a html element")
+                    .dyn_into::<web_sys::HtmlElement>().unwrap()
+            })
         })
     }
 
@@ -308,6 +326,11 @@ pub trait ElementContainer: Clone {
         self.js_element().set_text_content(value);
     }
 
+    fn with_text_content(mut self, value: Option<&str>) -> Self {
+        self.set_text_content(value);
+        self
+    }
+
     // id operations
     // -------------
     fn id(&self) -> String {
@@ -350,6 +373,11 @@ pub trait ElementContainer: Clone {
         })
     }
 
+    fn with_classes(mut self, names: &[impl AsRef<str>]) -> HellResult<Self> {
+        self.add_classes(names)?;
+        Ok(self)
+    }
+
     #[inline]
     fn add_classes_unchecked(&mut self, names: &[&str]) {
         self.add_classes(names).expect("failed to add multiple classes");
@@ -385,6 +413,22 @@ pub trait ElementContainer: Clone {
             console_error!("failed to set attribute: {:?}", e);
             e
         })
+    }
+
+    fn set_attributes(&mut self, attributes: &[(&str, &str)]) -> HellResult<()> {
+        for (name, value) in attributes {
+            self.js_element().set_attribute(name, value).to_web_hell_err().map_err(|e| {
+                console_error!("failed to set attribute: {:?}", e);
+                e
+            })?;
+        }
+
+        Ok(())
+    }
+
+    fn with_attributes(mut self, attributes: &[(&str, &str)]) -> HellResult<Self> {
+        self.set_attributes(attributes)?;
+        Ok(self)
     }
 
     #[inline]
