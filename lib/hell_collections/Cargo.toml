@@ -1,7 +1,0 @@
-[package]
-name = "hell_collections"
-version.workspace = true
-edition.workspace = true
-authors.workspace = true
-
-[dependencies]

@@ -1,3 +1,3 @@
-#!/bin/env bash
+#!/bin/sh
 
 cargo build --all-features
