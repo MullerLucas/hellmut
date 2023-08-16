@@ -7,12 +7,11 @@ members = [ "lib/*" ]
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
-authors = [ "helloki <helloki@mailbox.org>" ]
+authors = [ "Lucas Muller <muller.lucas@mailbox.org>" ]
 
 
 
 [workspace.dependencies]
-# hust
 hell_error = { path = "lib/hell_error" }
 hell_web   = { path = "lib/hell_web" }
 
